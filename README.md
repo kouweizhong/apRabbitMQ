@@ -3,26 +3,57 @@ rabbitmq
 
 介绍
 ---------------------
-### 有api 接口，可以前置WAF进行负载均衡和安全防护。
-> test.sh
->> fig up -d && fig ps
->> ######http://127.0.0.1:15672/#/  guest/guest
+##一键启动
+
+*   fig up -d && fig ps
+*   执行 test *sh 脚本测试
+*   配置查看队列信息 http://127.0.0.1:15672/#/  guest/guest
+
 
 ##业务场景1-数据同步
+
 *   实现一个topic 的路由，实现消息的自动匹配
 *   详见 test-sync-data.sh
 
 ##业务场景2-日志记录
+
 *   定义日志的路由与消息队列
 *   log_by_lua_file 调用 rabbitmq-插入日志数据；
 *   详见 test-sync-log.sh
 
 ##业务场景3-消息事件触发
+
 *   定义消息时间路由与队列
 *   消息推送消费API的绑定； todo 通用方式
 *   非阻塞消息推送
 *   同日志记录，实现方式一样
 
+##业务场景3-RabbitMQ15672的 nginx 代理配置
+    
+    location /rabbitmq {
+                rewrite         /rabbitmq/(.*) /$1 break;
+                proxy_pass      http://127.0.0.1:15672;
+                proxy_redirect  off;
+                proxy_set_header Host $host;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+## 有api 接口，可以前置WAF进行负载均衡和安全防护。
+
+       location /mqapi {
+                client_body_buffer_size 128k;
+                proxy_send_timeout   90;
+                proxy_read_timeout   90;
+                proxy_buffer_size    4k;
+                proxy_buffers     16 32k;
+                proxy_busy_buffers_size 64k;
+                proxy_temp_file_write_size 64k;
+                proxy_connect_timeout 30s;
+                proxy_pass   http://192.168.102.110:15672/api;
+                proxy_set_header   Host   $host;
+                proxy_set_header   X-Real-IP  $remote_addr;
+                proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        }
 
 ###RabbitMQ
 + RabbitMQ是实现AMQP（高级消息队列协议）的消息中间件的一种，最初起源于金融系统，用于在分布式系统中存储转发消息，在易用性、扩展性、高可用
