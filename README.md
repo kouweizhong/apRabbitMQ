@@ -9,6 +9,10 @@ rabbitmq
 *   执行 test *sh 脚本测试
 *   配置查看队列信息 http://127.0.0.1:15672/#/  guest/guest
 
+##构建镜像包
+
+    docker build -t supermy/ap-rabbitmq  rabbitmq
+
 
 ##业务场景1-数据同步
 
